@@ -11,17 +11,24 @@
 #+END_HTML
 ** [#A] Questions
 *** Why community want to switch from heapster to metric server?
-- Heapster serves the API using go http library which doesn’t offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#scalability-limitations][link]])
+- Heapster is not compatible with Prometheus. It assumes that the data store is a bare time-series database and allows a direct write path to it. But Prometheus is a pull based model.
+- Heapster serves the API using go http library which doesn’t offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#current-status][link]]
+- Design problem makes heapster hard to maintain.
+
+https://brancz.com/2018/01/05/prometheus-vs-heapster-vs-kubernetes-metrics-apis/
 
 In Kubernetes 1.12, heapster will be tenatively removed. In 1.13, it will be moved to kubernetes-retired organization. ([[https://github.com/kubernetes/heapster/blob/master/docs/deprecation.md][link]])
 
 Consider using metrics-server and a third party metrics pipeline to gather Prometheus-format metrics instead.
 *** How I can send my pod/application metrics? Metric server won't be a good idea?
 ** k8s monitoring architecture
-- a per-node agent and a cluster-level aggregator [[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md][link]]
+- a per-node agent and a cluster-level aggregator ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md][link]])
+- Metrics: system metrics and service metrics. Futhermore, system metrics are divided into core metrics and non-core metrics. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md#terminology][link]])
 ** Metric Server
 *** Basic Intro
-It will be a cluster level component which periodically scrapes metrics from all Kubernetes nodes served by Kubelet through Summary API. Then metrics will be aggregated, stored in memory (see Scalability limitations) and served in Metrics API format. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#design][link]])
+1. Metric server is sort of a stripped-down version of Heapster
+- The goal for the effort is to provide resource usage metrics for pods and nodes through the API server. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/resource-metrics-api.md#goal][link]])
+- It will be a cluster level component which periodically scrapes metrics from all Kubernetes nodes served by Kubelet through Summary API. Then metrics will be aggregated, stored in memory (see Scalability limitations) and served in Metrics API format. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#design][link]])
 **** local notes                                                   :noexport:
 Resource Metrics API is an effort to provide a first-class Kubernetes API (stable, versioned, discoverable, available through apiserver and with client support) that serves resource usage metrics for pods and nodes.
 
@@ -50,6 +57,8 @@ Today (Kubernetes 1.7), there are several sources of metrics within a Kubernetes
 | Heapster       | k8s add-on                                                          |
 | Cadvisor       | a standalone container/node metrics collection and monitoring tool. |
 | Kubernetes API | does not track metrics. But can get real time metrics               |
+*** Design Goals
+- The data for a given set of pods (defined either by pod list or label selector) should be accessible in one request due to performance issues. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/resource-metrics-api.md#goal][link]])
 *** Limitations
 - Metrics Server supports up to 30 pods per cluster node. (From [[https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/metrics-server][link]])
 - Assume to collect up to 10 metrics from each pod and node running in a cluster (From [[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#scalability-limitations][link]])
@@ -61,11 +70,11 @@ https://github.com/kubernetes/apiserver
  http://192.168.99.102:30000/metrics
 
 *** TODO How to query metric server manually
-** #  --8<-------------------------- separator ------------------------>8-- :noexport:
-** Cadvisor
-Cadvisor monitors node and container core metrics in addition to container events.
-It natively provides a Prometheus metrics endpoint
-The Kubernetes kublet has an embedded Cadvisor that only exposes the metrics, not the events.
+** kube-state-metrics
+- Useful links
+#+BEGIN_EXAMPLE
+https://brancz.com/2017/11/13/kube-state-metrics-the-past-the-present-and-the-future/
+#+END_EXAMPLE
 ** heapster
 Heapster is an add on to Kubernetes that collects and forwards both node, namespace, pod and container level metrics to one or more “sinks” (e.g. InfluxDB). 
 
@@ -74,6 +83,16 @@ It also provides REST endpoints to gather those metrics. The metrics are constra
 Heapster queries the kubelet for its data.
 
 Today, heapster is the source of the time-series data for the Kubernetes Dashboard.
+
+- Useful links
+#+BEGIN_EXAMPLE
+https://brancz.com/2017/11/13/kube-state-metrics-the-past-the-present-and-the-future/
+#+END_EXAMPLE
+** #  --8<-------------------------- separator ------------------------>8-- :noexport:
+** Cadvisor
+Cadvisor monitors node and container core metrics in addition to container events.
+It natively provides a Prometheus metrics endpoint
+The Kubernetes kublet has an embedded Cadvisor that only exposes the metrics, not the events.
 ** More Resources
  License: Code is licensed under [[https://www.dennyzhang.com/wp-content/mit_license.txt][MIT License]].
 #+BEGIN_EXAMPLE
@@ -84,10 +103,13 @@ https://blog.outlyer.com/monitoring-kubernetes-with-heapster-and-prometheus
 https://www.outcoldman.com/en/archive/2017/07/09/kubernetes-monitoring-resources/
 #+END_EXAMPLE
 
-#+BEGIN_HTML
+ #+BEGIN_HTML
  <a href="https://www.dennyzhang.com"><img align="right" width="201" height="268" src="https://raw.githubusercontent.com/USDevOps/mywechat-slack-group/master/images/denny_201706.png"></a>
-
  <a href="https://www.dennyzhang.com"><img align="right" src="https://raw.githubusercontent.com/USDevOps/mywechat-slack-group/master/images/dns_small.png"></a>
+
+ <a href="https://www.linkedin.com/in/dennyzhang001"><img align="bottom" src="https://www.dennyzhang.com/wp-content/uploads/sns/linkedin.png" alt="linkedin" /></a>
+ <a href="https://github.com/dennyzhang"><img align="bottom"src="https://www.dennyzhang.com/wp-content/uploads/sns/github.png" alt="github" /></a>
+ <a href="https://www.dennyzhang.com/slack" target="_blank" rel="nofollow"><img align="bottom" src="https://slack.dennyzhang.com/badge.svg" alt="slack"/></a>
  #+END_HTML
 * org-mode configuration                                           :noexport:
 #+STARTUP: overview customtime noalign logdone
