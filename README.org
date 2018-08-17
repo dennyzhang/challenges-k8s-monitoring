@@ -9,20 +9,77 @@
 
 <a href="http://makeapullrequest.com" target="_blank" rel="nofollow"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"/></a>
 #+END_HTML
-** Questions
+** [#A] Questions
 *** Why community want to switch from heapster to metric server?
 *** How I can send my pod/application metrics? Metric server won't be a good idea?
+** Metric Server
+*** Basic Intro
+Resource Metrics API is an effort to provide a first-class Kubernetes API (stable, versioned, discoverable, available through apiserver and with client support) that serves resource usage metrics for pods and nodes.
+
+- metric server is sort of a stripped-down version of Heapster
+- The metrics-server will collect “Core” metrics from cAdvisor APIs (currently embedded in the kubelet) and store them in memory as opposed to in etcd. 
+- The metrics-server will provide a supported API for feeding schedulers and horizontal pod auto-scalers
+- All other Kubernetes components will supply their own metrics in a Prometheus format
+
+Metrics Server is a cluster-wide aggregator of resource usage data. 
+
+Metrics Server registered in the main API server through Kubernetes aggregator.
+
+The metrics-server will provide a much needed official API for the internal components of Kubernetes to make decisions about the utilization and performance of the cluster.
+
+- HPA(Horizontal Pod Autoscaler) need input to do good auto-scaling
+
+https://kubernetes.io/docs/tasks/debug-application-cluster/core-metrics-pipeline/
+| Name           | Summary                                                           |
+|----------------+-------------------------------------------------------------------|
+| Core metrics   | node/container level metrics; CPU, memory, disk and network, etc. |
+| Custom metrics | refers to application metrics, e.g. HTTP request rate.            |
+
+Today (Kubernetes 1.7), there are several sources of metrics within a Kubernetes cluster
+| Name           | Summary                                                             |
+|----------------+---------------------------------------------------------------------|
+| Heapster       | k8s add-on                                                          |
+| Cadvisor       | a standalone container/node metrics collection and monitoring tool. |
+| Kubernetes API | does not track metrics. But can get real time metrics               |
+*** Limitations
+- Metrics Server supports up to 30 pods per cluster node. (From [[https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/metrics-server][link]])
+*** TODO try metric server in minikube
+ https://docs.giantswarm.io/guides/kubernetes-heapster/
+
+ http://192.168.99.102:30000/metrics
+
+*** TODO How to query metric server manually
+** #  --8<-------------------------- separator ------------------------>8-- :noexport:
+** Cadvisor
+Cadvisor monitors node and container core metrics in addition to container events.
+It natively provides a Prometheus metrics endpoint
+The Kubernetes kublet has an embedded Cadvisor that only exposes the metrics, not the events.
+** heapster
+Heapster is an add on to Kubernetes that collects and forwards both node, namespace, pod and container level metrics to one or more “sinks” (e.g. InfluxDB). 
+
+It also provides REST endpoints to gather those metrics. The metrics are constrained to CPU, filesystem, memory, network and uptime.
+
+Heapster queries the kubelet for its data.
+
+Today, heapster is the source of the time-series data for the Kubernetes Dashboard.
 ** More Resources
  License: Code is licensed under [[https://www.dennyzhang.com/wp-content/mit_license.txt][MIT License]].
+#+BEGIN_EXAMPLE
+https://github.com/kubernetes-incubator/metrics-server
+https://github.com/kubernetes-incubator/metrics-server/tree/master/deploy/1.8%2B
+https://blog.freshtracks.io/what-is-the-the-new-kubernetes-metrics-server-849c16aa01f4
+https://blog.outlyer.com/monitoring-kubernetes-with-heapster-and-prometheus
+https://www.outcoldman.com/en/archive/2017/07/09/kubernetes-monitoring-resources/
+#+END_EXAMPLE
 
- #+BEGIN_HTML
+#+BEGIN_HTML
  <a href="https://www.dennyzhang.com"><img align="right" width="201" height="268" src="https://raw.githubusercontent.com/USDevOps/mywechat-slack-group/master/images/denny_201706.png"></a>
 
  <a href="https://www.dennyzhang.com"><img align="right" src="https://raw.githubusercontent.com/USDevOps/mywechat-slack-group/master/images/dns_small.png"></a>
  #+END_HTML
 * org-mode configuration                                           :noexport:
-#+STARTUP: overview customtime noalign logdone showall
-#+TITLE:  Kubernets monitoring
+#+STARTUP: overview customtime noalign logdone
+#+TITLE:  Kubernets Monitoring
 #+DESCRIPTION: 
 #+KEYWORDS: 
 #+AUTHOR: Denny Zhang
@@ -35,3 +92,34 @@
 #+SEQ_TODO: TODO HALF ASSIGN | DONE BYPASS DELEGATE CANCELED DEFERRED
 #+LINK_UP:   
 #+LINK_HOME: 
+* [#A] k8s metric server                                 :noexport:IMPORTANT:
+** TODO Key scenarios of metric server
+The metrics-server will provide a much needed official API for the internal components of Kubernetes to make decisions about the utilization and performance of the cluster.
+
+- HPA(Horizontal Pod Autoscaler) need input to do good auto-scaling
+** TODO There are plans for an “Infrastore”, a Kubernetes component that keeps historical data and events
+** TODO kube-aggregator
+** TODO what is promethues format?
+#+BEGIN_EXAMPLE
+Denny Zhang [12:34 AM]
+An easy introduction about k8s metric server. (It will replace heapster)
+
+https://blog.freshtracks.io/what-is-the-the-new-kubernetes-metrics-server-849c16aa01f4
+
+> All other Kubernetes components will supply their own metrics in a Prometheus format
+
+In logging domain, we can say `syslog` is the standard format
+
+In metric domain, maybe we can choose `prometheus` as the standard format.
+#+END_EXAMPLE
+** Metrics Use Cases
+https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/resource-metrics-api.md
+
+https://docs.giantswarm.io/guides/kubernetes-heapster/
+
+#+BEGIN_EXAMPLE
+Horizontal Pod Autoscaler: It scales pods automatically based on CPU or custom metrics (not explained here). More information here.
+Kubectl top: The command top of our beloved Kubernetes CLI display metrics directly in the terminal.
+Kubernetes dashboard: See Pod and Nodes metrics integrated into the main Kubernetes UI dashboard. More info here
+Scheduler: In the future Core Metrics will be considered in order to schedule best-effort Pods.
+#+END_EXAMPLE
