@@ -11,9 +11,18 @@
 #+END_HTML
 ** [#A] Questions
 *** Why community want to switch from heapster to metric server?
+- Heapster serves the API using go http library which doesn’t offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#scalability-limitations][link]])
+
+In Kubernetes 1.12, heapster will be tenatively removed. In 1.13, it will be moved to kubernetes-retired organization. ([[https://github.com/kubernetes/heapster/blob/master/docs/deprecation.md][link]])
+
+Consider using metrics-server and a third party metrics pipeline to gather Prometheus-format metrics instead.
 *** How I can send my pod/application metrics? Metric server won't be a good idea?
+** k8s monitoring architecture
+- a per-node agent and a cluster-level aggregator [[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md][link]]
 ** Metric Server
 *** Basic Intro
+It will be a cluster level component which periodically scrapes metrics from all Kubernetes nodes served by Kubelet through Summary API. Then metrics will be aggregated, stored in memory (see Scalability limitations) and served in Metrics API format. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#design][link]])
+**** local notes                                                   :noexport:
 Resource Metrics API is an effort to provide a first-class Kubernetes API (stable, versioned, discoverable, available through apiserver and with client support) that serves resource usage metrics for pods and nodes.
 
 - metric server is sort of a stripped-down version of Heapster
@@ -43,6 +52,9 @@ Today (Kubernetes 1.7), there are several sources of metrics within a Kubernetes
 | Kubernetes API | does not track metrics. But can get real time metrics               |
 *** Limitations
 - Metrics Server supports up to 30 pods per cluster node. (From [[https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/metrics-server][link]])
+- Assume to collect up to 10 metrics from each pod and node running in a cluster (From [[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#scalability-limitations][link]])
+*** TODO What is API aggregation layer in metric server?
+https://github.com/kubernetes/apiserver
 *** TODO try metric server in minikube
  https://docs.giantswarm.io/guides/kubernetes-heapster/
 
@@ -123,3 +135,35 @@ Kubectl top: The command top of our beloved Kubernetes CLI display metrics direc
 Kubernetes dashboard: See Pod and Nodes metrics integrated into the main Kubernetes UI dashboard. More info here
 Scheduler: In the future Core Metrics will be considered in order to schedule best-effort Pods.
 #+END_EXAMPLE
+* Kubernetes Monitoring: prometheus, heapster                      :noexport:
+https://deis.com/blog/2016/monitoring-kubernetes-with-heapster/
+https://groups.google.com/forum/#!topic/prometheus-developers/3zq4oD7if3s
+
+Since we're extending heapster in various ways for auto-scaling, and
+we're about to add support for collecting and aggregating custom
+metrics, we should decide and document what the boundaries for
+heapster's responsibilities should be. In particular, I don't want it
+to grow into a general-purpose application and/or infrastructure
+monitoring, dashboarding, and alerting system, such as
+Prometheus. There are many such systems, and we shouldn't compete with
+them.
+
+#+BEGIN_EXAMPLE
+Heapster is a competing monitoring system.
+
+ * Heapster is limited to Kuberenetes container metrics, it is not general use.
+ * Heapster only provides metrics back as REST, it does not have a query language. (atleast that I could find)
+ * Heapster does not have any form of alerting.
+Basically, if you have Prometheus, there's almost no reason to use heapster.
+#+END_EXAMPLE
+** What is the relationship of heapster and prometheus
+https://groups.google.com/forum/#!topic/prometheus-developers/3zq4oD7if3s
+https://github.com/kubernetes/heapster/issues/665
+
+* DONE "kubectl top" need heapster                                 :noexport:
+  CLOSED: [2018-07-31 Tue 16:40]
+#+BEGIN_EXAMPLE
+kubo@jumper:~$ kubectl top pod --all-namespaces --containers=true
+Error from server (ServiceUnavailable): the server is currently unable to handle the request (get services http:heapster:)
+#+END_EXAMPLE
+
