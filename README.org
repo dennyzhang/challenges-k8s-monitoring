@@ -1,17 +1,25 @@
-* Kubernets Monitoring
+* Kubernets Monitoring                                              :Concept:
+:PROPERTIES:
+:type:     monitoring
+:END:
+Blog URL: https://kubernetes.dennyzhang.com/challenges-k8s-monitoring, Category: [[https://kubernetes.dennyzhang.com/category/concept][concept]]
+
 #+BEGIN_HTML
-<a href="https://www.linkedin.com/in/dennyzhang001"><img src="https://www.dennyzhang.com/wp-content/uploads/sns/linkedin.png" alt="linkedin" /></a>
-<a href="https://github.com/dennyzhang"><img src="https://www.dennyzhang.com/wp-content/uploads/sns/github.png" alt="github" /></a>
-<a href="https://www.dennyzhang.com/slack" target="_blank" rel="nofollow"><img src="http://slack.dennyzhang.com/badge.svg" alt="slack"/></a>
 <a href="https://github.com/dennyzhang/challenges-k8s-monitoring"><img align="right" width="200" height="183" src="https://www.dennyzhang.com/wp-content/uploads/denny/watermark/github.png" /></a>
 
-<br/><br/>
+<div id="the whole thing" style="overflow: hidden;">
+<div style="float: left; padding: 5px"> <a href="https://www.linkedin.com/in/dennyzhang001"><img src="https://www.dennyzhang.com/wp-content/uploads/sns/linkedin.png" alt="linkedin" /></a></div>
+<div style="float: left; padding: 5px"><a href="https://github.com/dennyzhang"><img src="https://www.dennyzhang.com/wp-content/uploads/sns/github.png" alt="github" /></a></div>
+<div style="float: left; padding: 5px"><a href="https://www.dennyzhang.com/slack" target="_blank" rel="nofollow"><img src="https://slack.dennyzhang.com/badge.svg" alt="slack"/></a></div>
+</div>
 
+<br/><br/>
 <a href="http://makeapullrequest.com" target="_blank" rel="nofollow"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"/></a>
 #+END_HTML
+
 ** [#A] Questions
 *** Why community want to switch from heapster to metric server?
-- Heapster serves the API using go http library which doesn’t offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#scalability-limitations][link]])
+- Heapster serves the API using go http library which doesn't offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#scalability-limitations][link]])
 
 In Kubernetes 1.12, heapster will be tenatively removed. In 1.13, it will be moved to kubernetes-retired organization. ([[https://github.com/kubernetes/heapster/blob/master/docs/deprecation.md][link]])
 
@@ -26,7 +34,7 @@ It will be a cluster level component which periodically scrapes metrics from all
 Resource Metrics API is an effort to provide a first-class Kubernetes API (stable, versioned, discoverable, available through apiserver and with client support) that serves resource usage metrics for pods and nodes.
 
 - metric server is sort of a stripped-down version of Heapster
-- The metrics-server will collect “Core” metrics from cAdvisor APIs (currently embedded in the kubelet) and store them in memory as opposed to in etcd. 
+- The metrics-server will collect "Core" metrics from cAdvisor APIs (currently embedded in the kubelet) and store them in memory as opposed to in etcd. 
 - The metrics-server will provide a supported API for feeding schedulers and horizontal pod auto-scalers
 - All other Kubernetes components will supply their own metrics in a Prometheus format
 
@@ -67,7 +75,7 @@ Cadvisor monitors node and container core metrics in addition to container event
 It natively provides a Prometheus metrics endpoint
 The Kubernetes kublet has an embedded Cadvisor that only exposes the metrics, not the events.
 ** heapster
-Heapster is an add on to Kubernetes that collects and forwards both node, namespace, pod and container level metrics to one or more “sinks” (e.g. InfluxDB). 
+Heapster is an add on to Kubernetes that collects and forwards both node, namespace, pod and container level metrics to one or more "sinks" (e.g. InfluxDB). 
 
 It also provides REST endpoints to gather those metrics. The metrics are constrained to CPU, filesystem, memory, network and uptime.
 
@@ -91,7 +99,6 @@ https://www.outcoldman.com/en/archive/2017/07/09/kubernetes-monitoring-resources
  #+END_HTML
 * org-mode configuration                                           :noexport:
 #+STARTUP: overview customtime noalign logdone
-#+TITLE:  Kubernets Monitoring
 #+DESCRIPTION: 
 #+KEYWORDS: 
 #+AUTHOR: Denny Zhang
@@ -109,7 +116,7 @@ https://www.outcoldman.com/en/archive/2017/07/09/kubernetes-monitoring-resources
 The metrics-server will provide a much needed official API for the internal components of Kubernetes to make decisions about the utilization and performance of the cluster.
 
 - HPA(Horizontal Pod Autoscaler) need input to do good auto-scaling
-** TODO There are plans for an “Infrastore”, a Kubernetes component that keeps historical data and events
+** TODO There are plans for an "Infrastore", a Kubernetes component that keeps historical data and events
 ** TODO kube-aggregator
 ** TODO what is promethues format?
 #+BEGIN_EXAMPLE
