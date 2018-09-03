@@ -17,22 +17,24 @@ Blog URL: https://kubernetes.dennyzhang.com/challenges-k8s-monitoring, Category:
 <a href="http://makeapullrequest.com" target="_blank" rel="nofollow"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"/></a>
 #+END_HTML
 
+** Summary
+| Name                           | Summary                                     |
+|--------------------------------+---------------------------------------------|
+| Metrics Defined By Metrics API | [[https://github.com/kubernetes/metrics/blob/5c7f1617ad5e9ceada708f5be3f93918d7b724a4/pkg/apis/metrics/v1beta1/types.go][kubernets/pkg/apis/metrics/v1beta1/types.go]] |
 ** [#A] Questions
 *** Why community want to switch from heapster to metric server?
-<<<<<<< HEAD
 - Heapster serves the API using go http library which doesn't offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#scalability-limitations][link]])
-=======
 - Heapster is not compatible with Prometheus. It assumes that the data store is a bare time-series database and allows a direct write path to it. But Prometheus is a pull based model.
-- Heapster serves the API using go http library which doesn’t offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#current-status][link]]
+- Heapster serves the API using go http library which doesn't offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#current-status][link]]
 - Design problem makes heapster hard to maintain.
 
 https://brancz.com/2018/01/05/prometheus-vs-heapster-vs-kubernetes-metrics-apis/
->>>>>>> b39a437ad2f7d454d04e3673793244b5588c3fd0
 
 In Kubernetes 1.12, heapster will be tenatively removed. In 1.13, it will be moved to kubernetes-retired organization. ([[https://github.com/kubernetes/heapster/blob/master/docs/deprecation.md][link]])
 
 Consider using metrics-server and a third party metrics pipeline to gather Prometheus-format metrics instead.
 *** How I can send my pod/application metrics? Metric server won't be a good idea?
+*** Data storage for prometheus
 ** k8s monitoring architecture
 - a per-node agent and a cluster-level aggregator ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md][link]])
 - Metrics: system metrics and service metrics. Futhermore, system metrics are divided into core metrics and non-core metrics. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md#terminology][link]])
@@ -100,6 +102,7 @@ Today, heapster is the source of the time-series data for the Kubernetes Dashboa
 #+BEGIN_EXAMPLE
 https://brancz.com/2017/11/13/kube-state-metrics-the-past-the-present-and-the-future/
 #+END_EXAMPLE
+** [#A] Prometheus
 ** #  --8<-------------------------- separator ------------------------>8-- :noexport:
 ** Cadvisor
 Cadvisor monitors node and container core metrics in addition to container events.
