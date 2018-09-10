@@ -19,10 +19,17 @@
 Blog URL: https://kubernetes.dennyzhang.com/challenges-k8s-monitoring, Category: [[https://kubernetes.dennyzhang.com/category/concept][concept]]
 
 ** Summary
-| Name                           | Summary                                     |
-|--------------------------------+---------------------------------------------|
-| Metrics Defined By Metrics API | [[https://github.com/kubernetes/metrics/blob/5c7f1617ad5e9ceada708f5be3f93918d7b724a4/pkg/apis/metrics/v1beta1/types.go][kubernets/pkg/apis/metrics/v1beta1/types.go]] |
+| Name                           | Summary                                                             |
+|--------------------------------+---------------------------------------------------------------------|
+| [[https://github.com/kubernetes/kube-state-metrics][kube-state-metric]]              | Add-on agent to generate and expose cluster-level metrics           |
+| [[https://github.com/google/cadvisor][cadvisor]]                       | a standalone container/node metrics collection and monitoring tool. |
+| cluster events                 | heapster, resource metrics                                          |
+| Metrics Defined By Metrics API | [[https://github.com/kubernetes/metrics/blob/5c7f1617ad5e9ceada708f5be3f93918d7b724a4/pkg/apis/metrics/v1beta1/types.go][kubernets/pkg/apis/metrics/v1beta1/types.go]]                         |
+| Heapster                       | k8s add-on                                                          |
+| Kubernetes API                 | does not track metrics. But can get real time metrics               |
+
 ** [#A] Questions
+*** [#A] What things which compoents collect, and how? events, audit, cAdvisors, kube-state-metrics, metric server, api server
 *** Why community want to switch from heapster to metric server?
 - Heapster serves the API using go http library which doesn't offer a number of functionality that is offered by Kubernetes API server like authorization/authentication or client generation. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/metrics-server.md#scalability-limitations][link]])
 - Heapster is not compatible with Prometheus. It assumes that the data store is a bare time-series database and allows a direct write path to it. But Prometheus is a pull based model.
@@ -66,12 +73,6 @@ https://kubernetes.io/docs/tasks/debug-application-cluster/core-metrics-pipeline
 | Core metrics   | node/container level metrics; CPU, memory, disk and network, etc. |
 | Custom metrics | refers to application metrics, e.g. HTTP request rate.            |
 
-Today (Kubernetes 1.7), there are several sources of metrics within a Kubernetes cluster
-| Name           | Summary                                                             |
-|----------------+---------------------------------------------------------------------|
-| Heapster       | k8s add-on                                                          |
-| Cadvisor       | a standalone container/node metrics collection and monitoring tool. |
-| Kubernetes API | does not track metrics. But can get real time metrics               |
 *** Design Goals
 - The data for a given set of pods (defined either by pod list or label selector) should be accessible in one request due to performance issues. ([[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/resource-metrics-api.md#goal][link]])
 *** Limitations
@@ -111,23 +112,28 @@ It natively provides a Prometheus metrics endpoint
 The Kubernetes kublet has an embedded Cadvisor that only exposes the metrics, not the events.
 ** More Resources
  License: Code is licensed under [[https://www.dennyzhang.com/wp-content/mit_license.txt][MIT License]].
-#+BEGIN_EXAMPLE
-https://github.com/kubernetes-incubator/metrics-server
-https://github.com/kubernetes-incubator/metrics-server/tree/master/deploy/1.8%2B
-https://blog.freshtracks.io/what-is-the-the-new-kubernetes-metrics-server-849c16aa01f4
-https://blog.outlyer.com/monitoring-kubernetes-with-heapster-and-prometheus
-https://www.outcoldman.com/en/archive/2017/07/09/kubernetes-monitoring-resources/
-#+END_EXAMPLE
 
- #+BEGIN_HTML
+https://github.com/kubernetes-incubator/metrics-server
+
+https://github.com/kubernetes-incubator/metrics-server/tree/master/deploy/1.8%2B
+
+https://blog.freshtracks.io/what-is-the-the-new-kubernetes-metrics-server-849c16aa01f4
+
+https://blog.outlyer.com/monitoring-kubernetes-with-heapster-and-prometheus
+
+https://www.outcoldman.com/en/archive/2017/07/09/kubernetes-monitoring-resources/
+
+https://banzaicloud.com/blog/prometheus-application-monitoring/
+
+#+BEGIN_HTML
  <a href="https://www.dennyzhang.com"><img align="right" width="201" height="268" src="https://raw.githubusercontent.com/USDevOps/mywechat-slack-group/master/images/denny_201706.png"></a>
  <a href="https://www.dennyzhang.com"><img align="right" src="https://raw.githubusercontent.com/USDevOps/mywechat-slack-group/master/images/dns_small.png"></a>
 
  <a href="https://www.linkedin.com/in/dennyzhang001"><img align="bottom" src="https://www.dennyzhang.com/wp-content/uploads/sns/linkedin.png" alt="linkedin" /></a>
  <a href="https://github.com/dennyzhang"><img align="bottom"src="https://www.dennyzhang.com/wp-content/uploads/sns/github.png" alt="github" /></a>
  <a href="https://www.dennyzhang.com/slack" target="_blank" rel="nofollow"><img align="bottom" src="https://slack.dennyzhang.com/badge.svg" alt="slack"/></a>
- #+END_HTML
-* org-mode configuration                                           :noexport:
+#+END_HTML
+** org-mode configuration                                          :noexport:
 #+STARTUP: overview customtime noalign logdone
 #+DESCRIPTION: 
 #+KEYWORDS: 
@@ -172,6 +178,12 @@ Kubectl top: The command top of our beloved Kubernetes CLI display metrics direc
 Kubernetes dashboard: See Pod and Nodes metrics integrated into the main Kubernetes UI dashboard. More info here
 Scheduler: In the future Core Metrics will be considered in order to schedule best-effort Pods.
 #+END_EXAMPLE
+* DONE "kubectl top" need heapster                                 :noexport:
+  CLOSED: [2018-07-31 Tue 16:40]
+#+BEGIN_EXAMPLE
+kubo@jumper:~$ kubectl top pod --all-namespaces --containers=true
+Error from server (ServiceUnavailable): the server is currently unable to handle the request (get services http:heapster:)
+#+END_EXAMPLE
 * Kubernetes Monitoring: prometheus, heapster                      :noexport:
 https://deis.com/blog/2016/monitoring-kubernetes-with-heapster/
 https://groups.google.com/forum/#!topic/prometheus-developers/3zq4oD7if3s
@@ -196,11 +208,182 @@ Basically, if you have Prometheus, there's almost no reason to use heapster.
 ** What is the relationship of heapster and prometheus
 https://groups.google.com/forum/#!topic/prometheus-developers/3zq4oD7if3s
 https://github.com/kubernetes/heapster/issues/665
+* TODO try to talk with controller manager metrics                 :noexport:
+https://kubernetes.io/docs/concepts/cluster-administration/controller-metrics/
+* TODO Blog: What things which compoents collect, and how? events, audit, cAdvisors, kube-state-metrics, metric server, api server
+https://github.com/GoogleCloudPlatform/click-to-deploy/blob/master/k8s/prometheus/resources/prometheus-grafana-architecture.png
 
-* DONE "kubectl top" need heapster                                 :noexport:
-  CLOSED: [2018-07-31 Tue 16:40]
+** basic usage
+https://sematext.com/kubernetes/
+
+Metrics
+Cluster
+Metrics aggregated over all nodes displayed in SPM overview
+Host / node level
+Metrics aggregated per node
+Pod level
+Metrics aggregated by pod name
+Docker Container level
+Metrics aggregated for a single container
+** TODO [#A] k8s events
+
+https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/events/event.go
+https://blog.appdynamics.com/product/monitoring-kubernetes-events/
+
+By monitoring these events, our extension enables enterprises to
+troubleshoot everything that goes wrong in the Kubernetes
+orchestration platform—from scaling up/scaling down, new deployments,
+deleting applications, creating new applications, and so on. If an
+event goes to a warning state, users can drill down into the warning
+to see where it occurred, making troubleshooting easier.
+
+https://github.com/kubernetes/kubernetes/issues/36304
+https://github.com/kubernetes/kubernetes/issues/4796
+
+kubectl get events -n wordpress
+
 #+BEGIN_EXAMPLE
-kubo@jumper:~$ kubectl top pod --all-namespaces --containers=true
-Error from server (ServiceUnavailable): the server is currently unable to handle the request (get services http:heapster:)
+   /Users/zdenny  kubectl get events                                                                                                                                                                                                                          ✔ 0
+No resources found.
+
+   /Users/zdenny  kubectl get events -n wordpress                                                                                                                                                                                                             ✔ 0
+LAST SEEN   FIRST SEEN   COUNT     NAME                                       KIND      SUBOBJECT   TYPE      REASON                 SOURCE               MESSAGE
+10m         10m          1         prometheus-1-prometheus.155bc314b145766f   Service               Normal    Type                   service-controller   ClusterIP -> LoadBalancer
+10m         10m          1         prometheus-1-prometheus.155bc314b146689c   Service               Normal    EnsuringLoadBalancer   service-controller   Ensuring load balancer
+9m          9m           1         prometheus-1-prometheus.155bc31d53e2d53c   Service               Normal    EnsuredLoadBalancer    service-controller   Ensured load balancer
+
+   /Users/zdenny  kubectl get events -n elasticsearch                                                                                                                                                                                                         ✔ 0
+No resources found.
+
+   /Users/zdenny  kubectl get events -n                                                                                                                                                                                                                       ✔ 0
+
+   /Users/zdenny  kubectl get ns                                                                                                                                                                                                                              ✘ 1
+NAME            STATUS    AGE
+default         Active    23h
+elasticsearch   Active    17h
+kube-public     Active    23h
+kube-system     Active    23h
+wordpress       Active    23h
+
+   /Users/zdenny  kubectl get events -n default                                                                                                                                                                                                               ✔ 0
+No resources found.
 #+END_EXAMPLE
 
+#+BEGIN_EXAMPLE
+  /Users/mac/git_code/kubernets_community/kubernetes/:
+  find . \( -iname event\* \) -ls
+  88846683       16 -rw-r--r--    1 mac              staff                4382 Oct  8 22:37 api/swagger-spec/events.k8s.io.json
+  88846684      168 -rw-r--r--    1 mac              staff               82420 Oct  8 22:37 api/swagger-spec/events.k8s.io_v1beta1.json
+  88846944        8 -rw-r--r--    1 mac              staff                2253 Oct  8 22:37 cluster/addons/fluentd-gcp/event-exporter.yaml
+  88846952        8 -rw-r--r--    1 mac              staff                 427 Oct  8 22:37 cluster/addons/fluentd-gcp/podsecuritypolicies/event-exporter-psp-binding.yaml
+  88846953        8 -rw-r--r--    1 mac              staff                 356 Oct  8 22:37 cluster/addons/fluentd-gcp/podsecuritypolicies/event-exporter-psp-role.yaml
+  88846954        8 -rw-r--r--    1 mac              staff                1265 Oct  8 22:37 cluster/addons/fluentd-gcp/podsecuritypolicies/event-exporter-psp.yaml
+  88848125        0 drwxr-xr-x    3 mac              staff                 102 Oct  8 22:37 docs/api-reference/events.k8s.io
+  88848857        0 drwxr-xr-x    6 mac              staff                 204 Oct  8 22:37 pkg/api/events
+  88849333        8 -rw-r--r--    1 mac              staff                3909 Oct  8 22:37 pkg/apis/core/validation/events.go
+  88849334       24 -rw-r--r--    1 mac              staff                9846 Oct  8 22:37 pkg/apis/core/validation/events_test.go
+  88849338        0 drwxr-xr-x    7 mac              staff                 238 Oct  8 22:37 pkg/apis/events
+  88849763       16 -rw-r--r--    1 mac              staff                4689 Oct  8 22:37 pkg/client/clientset_generated/internalclientset/typed/core/internalversion/event.go
+  88849764       16 -rw-r--r--    1 mac              staff                7647 Oct  8 22:37 pkg/client/clientset_generated/internalclientset/typed/core/internalversion/event_expansion.go
+  88849807        0 drwxr-xr-x    3 mac              staff                 102 Oct  8 22:37 pkg/client/clientset_generated/internalclientset/typed/events
+  88849811        8 -rw-r--r--    1 mac              staff                2455 Oct  8 22:37 pkg/client/clientset_generated/internalclientset/typed/events/internalversion/events_client.go
+  88849984        8 -rw-r--r--    1 mac              staff                3544 Oct  8 22:37 pkg/client/informers/informers_generated/internalversion/core/internalversion/event.go
+  88850120        8 -rw-r--r--    1 mac              staff                2986 Oct  8 22:37 pkg/client/listers/core/internalversion/event.go
+  88850799        0 drwxr-xr-x    4 mac              staff                 136 Oct  8 22:37 pkg/controller/volume/events
+  88850801        8 -rw-r--r--    1 mac              staff                1269 Oct  8 22:37 pkg/controller/volume/events/event.go
+  88852078        0 drwxr-xr-x    4 mac              staff                 136 Oct  8 22:37 pkg/kubelet/events
+  88852080        8 -rw-r--r--    1 mac              staff                4032 Oct  8 22:37 pkg/kubelet/events/event.go
+  88852942        0 drwxr-xr-x    7 mac              staff                 238 Oct  8 22:37 pkg/registry/core/event
+  88853115        0 drwxr-xr-x    5 mac              staff                 170 Oct  8 22:37 pkg/registry/events
+  88853117        0 drwxr-xr-x    5 mac              staff                 170 Oct  8 22:37 pkg/registry/events/event
+  88854282        0 drwxr-xr-x   12 mac              staff                 408 Oct  8 22:37 plugin/pkg/admission/eventratelimit
+  88854287        0 drwxr-xr-x   11 mac              staff                 374 Oct  8 22:37 plugin/pkg/admission/eventratelimit/apis/eventratelimit
+  88854736        0 drwxr-xr-x    4 mac              staff                 136 Oct  8 22:37 staging/src/k8s.io/api/events
+  88856452        8 -rw-r--r--    1 mac              staff                1402 Oct  8 22:37 staging/src/k8s.io/apiserver/pkg/storage/etcd3/event.go
+  88856901        8 -rw-r--r--    1 mac              staff                3348 Oct  8 22:38 staging/src/k8s.io/client-go/informers/core/v1/event.go
+  88856915        0 drwxr-xr-x    5 mac              staff                 170 Oct  8 22:38 staging/src/k8s.io/client-go/informers/events
+  88856920        8 -rw-r--r--    1 mac              staff                3410 Oct  8 22:38 staging/src/k8s.io/client-go/informers/events/v1beta1/event.go
+  88857290       16 -rw-r--r--    1 mac              staff                4638 Oct  8 22:38 staging/src/k8s.io/client-go/kubernetes/typed/core/v1/event.go
+  88857291       16 -rw-r--r--    1 mac              staff                6661 Oct  8 22:38 staging/src/k8s.io/client-go/kubernetes/typed/core/v1/event_expansion.go
+  88857336        0 drwxr-xr-x    3 mac              staff                 102 Oct  8 22:38 staging/src/k8s.io/client-go/kubernetes/typed/events
+  88857340       16 -rw-r--r--    1 mac              staff                4705 Oct  8 22:38 staging/src/k8s.io/client-go/kubernetes/typed/events/v1beta1/event.go
+  88857341        8 -rw-r--r--    1 mac              staff                2490 Oct  8 22:38 staging/src/k8s.io/client-go/kubernetes/typed/events/v1beta1/events_client.go
+  88857639        8 -rw-r--r--    1 mac              staff                2938 Oct  8 22:38 staging/src/k8s.io/client-go/listers/core/v1/event.go
+  88857656        0 drwxr-xr-x    3 mac              staff                 102 Oct  8 22:38 staging/src/k8s.io/client-go/listers/events
+  88857659        8 -rw-r--r--    1 mac              staff                3005 Oct  8 22:38 staging/src/k8s.io/client-go/listers/events/v1beta1/event.go
+  88858013       32 -rw-r--r--    1 mac              staff               12492 Oct  8 22:38 staging/src/k8s.io/client-go/tools/record/event.go
+  88858014       56 -rw-r--r--    1 mac              staff               28106 Oct  8 22:38 staging/src/k8s.io/client-go/tools/record/event_test.go
+  88858015       32 -rw-r--r--    1 mac              staff               15353 Oct  8 22:38 staging/src/k8s.io/client-go/tools/record/events_cache.go
+  88858016       24 -rw-r--r--    1 mac              staff               10647 Oct  8 22:38 staging/src/k8s.io/client-go/tools/record/events_cache_test.go
+  88859610       16 -rw-r--r--    1 mac              staff                4865 Oct  8 22:38 test/e2e/common/events.go
+  88859797       16 -rw-r--r--    1 mac              staff                4429 Oct  8 22:38 test/e2e/node/events.go
+  88859820        8 -rw-r--r--    1 mac              staff                1188 Oct  8 22:38 test/e2e/scheduling/events.go
+  88861342        8 -rw-r--r--    1 mac              staff                1237 Oct  8 22:38 vendor/github.com/Azure/go-ansiterm/event_handler.go
+  88862868        8 -rw-r--r--    1 mac              staff                1762 Oct  8 22:38 vendor/github.com/coreos/etcd/store/event.go
+  88862869        8 -rw-r--r--    1 mac              staff                3012 Oct  8 22:38 vendor/github.com/coreos/etcd/store/event_history.go
+  88862870        8 -rw-r--r--    1 mac              staff                 925 Oct  8 22:38 vendor/github.com/coreos/etcd/store/event_queue.go
+  88863102        0 drwxr-xr-x    4 mac              staff                 136 Oct  8 22:38 vendor/github.com/docker/docker/api/types/events
+  88863104        8 -rw-r--r--    1 mac              staff                1767 Oct  8 22:38 vendor/github.com/docker/docker/api/types/events/events.go
+  88863211        8 -rw-r--r--    1 mac              staff                2224 Oct  8 22:38 vendor/github.com/docker/docker/client/events.go
+  88864097        0 drwxr-xr-x    4 mac              staff                 136 Oct  8 22:38 vendor/github.com/google/cadvisor/events
+  88866315       16 -rw-r--r--    1 mac              staff                4548 Oct  8 22:38 vendor/github.com/storageos/go-api/event.go
+  88866348        8 -rw-r--r--    1 mac              staff                1788 Oct  8 22:38 vendor/github.com/storageos/go-api/types/events.go
+  88866697       24 -rw-r--r--    1 mac              staff                8314 Oct  8 22:38 vendor/github.com/vmware/govmomi/simulator/esx/event_manager.go
+  88866709       24 -rw-r--r--    1 mac              staff               10076 Oct  8 22:38 vendor/github.com/vmware/govmomi/simulator/event_manager.go
+  88866892       24 -rw-r--r--    1 mac              staff               11104 Oct  8 22:38 vendor/github.com/xanzy/go-cloudstack/cloudstack/EventService.go
+  88867181       32 -rw-r--r--    1 mac              staff               12549 Oct  8 22:38 vendor/golang.org/x/net/trace/events.go
+  88867464        8 -rw-r--r--    1 mac              staff                 824 Oct  8 22:38 vendor/golang.org/x/sys/windows/eventlog.go
+  88867482        8 -rw-r--r--    1 mac              staff                 979 Oct  8 22:38 vendor/golang.org/x/sys/windows/svc/event.go
+  
+  find finished at Mon Oct  8 22:40:15
+#+END_EXAMPLE
+** HALF audit
+https://kubernetes.io/docs/tasks/debug-application-cluster/audit/
+Each request on each stage of its execution generates an event, which is then pre-processed according to a certain policy and written to a backend
+** GKE 1.11
+#+BEGIN_EXAMPLE
+➜  raas-secrets git:(master) kubectl get pods --all-namespaces
+NAMESPACE       NAME                                                  READY     STATUS    RESTARTS   AGE
+elasticsearch   elasticsearch-1-elasticsearch-0                       1/1       Running   0          13h
+elasticsearch   elasticsearch-1-elasticsearch-1                       1/1       Running   0          13h
+kube-system     event-exporter-v0.2.1-5f5b89fcc8-vvtpc                2/2       Running   0          1d
+kube-system     fluentd-gcp-scaler-7c5db745fc-zmpvl                   1/1       Running   0          1d
+kube-system     fluentd-gcp-v3.1.0-79lc9                              2/2       Running   0          1d
+kube-system     fluentd-gcp-v3.1.0-f9nmh                              2/2       Running   0          1d
+kube-system     fluentd-gcp-v3.1.0-fx7w4                              2/2       Running   0          1d
+kube-system     fluentd-gcp-v3.1.0-xcgpz                              2/2       Running   0          1d
+kube-system     fluentd-gcp-v3.1.0-zbfxx                              2/2       Running   0          1d
+kube-system     fluentd-gcp-v3.1.0-zlxvh                              2/2       Running   0          1d
+kube-system     heapster-v1.5.3-85b85f4fbf-w2lfb                      3/3       Running   0          1d
+kube-system     kube-dns-788979dc8f-fb2hp                             4/4       Running   0          1d
+kube-system     kube-dns-788979dc8f-qs782                             4/4       Running   0          1d
+kube-system     kube-dns-autoscaler-79b4b844b9-6858t                  1/1       Running   0          1d
+kube-system     kube-proxy-gke-cluster-1-default-pool-36da1c6a-4356   1/1       Running   0          1d
+kube-system     kube-proxy-gke-cluster-1-default-pool-36da1c6a-6wx8   1/1       Running   0          1d
+kube-system     kube-proxy-gke-cluster-1-default-pool-36da1c6a-rbxc   1/1       Running   0          1d
+kube-system     kube-proxy-gke-cluster-1-default-pool-36da1c6a-skkd   1/1       Running   0          1d
+kube-system     kube-proxy-gke-cluster-1-pool-1-e95a10b3-5gl5         1/1       Running   0          1d
+kube-system     kube-proxy-gke-cluster-1-pool-1-e95a10b3-jx2r         1/1       Running   0          1d
+kube-system     l7-default-backend-5d5b9874d5-89xj5                   1/1       Running   0          1d
+kube-system     metrics-server-v0.2.1-7486f5bd67-c6fxz                2/2       Running   0          1d
+#+END_EXAMPLE
+** kube-state-metrics: Add-on agent to generate and expose cluster-level metrics.
+https://github.com/kubernetes/kube-state-metrics
+** Metric server: https://kubernetes.io/docs/tasks/debug-application-cluster/core-metrics-pipeline/
+** #  --8<-------------------------- separator ------------------------>8-- :noexport:
+** TODO events vs audit
+** cAdvisors -> kube-state-metrics->metric server->api server
+** heapster -> metric server
+** node exporter
+** TODO cAdvisors: http://localhost:8080/containers/
+** Controller manager metrics
+https://kubernetes.io/docs/concepts/cluster-administration/controller-metrics/
+** useful link
+https://sematext.com/kubernetes/
+https://www.datadoghq.com/blog/how-to-collect-and-graph-kubernetes-metrics/
+https://blog.freshtracks.io/what-is-the-the-new-kubernetes-metrics-server-849c16aa01f4
+** Kubernetes Integration: wavefront
+https://docs.wavefront.com/kubernetes.html
+
+* cAdvisor: /var/run mount                                         :noexport:
+https://github.com/google/cadvisor/issues/1955
